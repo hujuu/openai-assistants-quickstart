@@ -61,7 +61,7 @@ const Chat = ({
   functionCallHandler = () => Promise.resolve(""), // default to return empty string
 }: ChatProps) => {
   const [userInput, setUserInput] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<Array<MessageProps>>([]);
   const [inputDisabled, setInputDisabled] = useState(false);
   const [threadId, setThreadId] = useState("");
 
@@ -86,7 +86,7 @@ const Chat = ({
     createThread();
   }, []);
 
-  const sendMessage = async (text) => {
+  const sendMessage = async (text: string) => {
     const response = await fetch(
       `/api/assistants/threads/${threadId}/messages`,
       {
@@ -96,11 +96,12 @@ const Chat = ({
         }),
       }
     );
+    // @ts-ignore
     const stream = AssistantStream.fromReadableStream(response.body);
     handleReadableStream(stream);
   };
 
-  const submitActionResult = async (runId, toolCallOutputs) => {
+  const submitActionResult = async (runId: string, toolCallOutputs: any) => {
     const response = await fetch(
       `/api/assistants/threads/${threadId}/actions`,
       {
@@ -114,14 +115,16 @@ const Chat = ({
         }),
       }
     );
+    // @ts-ignore
     const stream = AssistantStream.fromReadableStream(response.body);
     handleReadableStream(stream);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     if (!userInput.trim()) return;
     sendMessage(userInput);
+    // @ts-ignore
     setMessages((prevMessages) => [
       ...prevMessages,
       { role: "user", text: userInput },
@@ -129,6 +132,16 @@ const Chat = ({
     setUserInput("");
     setInputDisabled(true);
     scrollToBottom();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      // Shiftキーを押していない場合は送信を防ぐ
+      e.preventDefault();
+    } else if (e.key === "Enter" && e.shiftKey) {
+      // Shift + Enter の場合は改行を追加する（必要に応じて）
+      setUserInput((prevInput) => prevInput + "\n");
+    }
   };
 
   /* Stream Event Handlers */
@@ -139,28 +152,28 @@ const Chat = ({
   };
 
   // textDelta - append text to last assistant message
-  const handleTextDelta = (delta) => {
+  const handleTextDelta = (delta: { value: null; annotations: null; }) => {
     if (delta.value != null) {
       appendToLastMessage(delta.value);
-    };
+    }
     if (delta.annotations != null) {
       annotateLastMessage(delta.annotations);
     }
   };
 
   // imageFileDone - show image in chat
-  const handleImageFileDone = (image) => {
+  const handleImageFileDone = (image: { file_id: any; }) => {
     appendToLastMessage(`\n![${image.file_id}](/api/files/${image.file_id})\n`);
   }
 
   // toolCallCreated - log new tool call
-  const toolCallCreated = (toolCall) => {
+  const toolCallCreated = (toolCall: { type: string; }) => {
     if (toolCall.type != "code_interpreter") return;
     appendMessage("code", "");
   };
 
   // toolCallDelta - log delta and snapshot for the tool call
-  const toolCallDelta = (delta, snapshot) => {
+  const toolCallDelta = (delta: { type: string; code_interpreter: { input: any; }; }) => {
     if (delta.type != "code_interpreter") return;
     if (!delta.code_interpreter.input) return;
     appendToLastMessage(delta.code_interpreter.input);
@@ -174,13 +187,13 @@ const Chat = ({
     const toolCalls = event.data.required_action.submit_tool_outputs.tool_calls;
     // loop over tool calls and call function handler
     const toolCallOutputs = await Promise.all(
-      toolCalls.map(async (toolCall) => {
+      toolCalls.map(async (toolCall: RequiredActionFunctionToolCall) => {
         const result = await functionCallHandler(toolCall);
         return { output: result, tool_call_id: toolCall.id };
       })
     );
     setInputDisabled(true);
-    submitActionResult(runId, toolCallOutputs);
+    await submitActionResult(runId, toolCallOutputs);
   };
 
   // handleRunCompleted - re-enable the input form
@@ -191,6 +204,7 @@ const Chat = ({
   const handleReadableStream = (stream: AssistantStream) => {
     // messages
     stream.on("textCreated", handleTextCreated);
+    // @ts-ignore
     stream.on("textDelta", handleTextDelta);
 
     // image
@@ -198,6 +212,7 @@ const Chat = ({
 
     // code interpreter
     stream.on("toolCallCreated", toolCallCreated);
+    // @ts-ignore
     stream.on("toolCallDelta", toolCallDelta);
 
     // events without helpers yet (e.g. requires_action and run.done)
@@ -214,9 +229,11 @@ const Chat = ({
     =======================
   */
 
-  const appendToLastMessage = (text) => {
+  const appendToLastMessage = (text: string) => {
+    // @ts-ignore
     setMessages((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
+      // @ts-ignore
       const updatedLastMessage = {
         ...lastMessage,
         text: lastMessage.text + text,
@@ -225,11 +242,13 @@ const Chat = ({
     });
   };
 
-  const appendMessage = (role, text) => {
+  const appendMessage = (role: string, text: string) => {
+    // @ts-ignore
     setMessages((prevMessages) => [...prevMessages, { role, text }]);
   };
 
-  const annotateLastMessage = (annotations) => {
+  const annotateLastMessage = (annotations: any[]) => {
+    // @ts-ignore
     setMessages((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
       const updatedLastMessage = {
@@ -248,6 +267,7 @@ const Chat = ({
     
   }
 
+  // @ts-ignore
   return (
     <div className={styles.chatContainer}>
       <div className={styles.messages}>
@@ -265,6 +285,7 @@ const Chat = ({
           className={styles.input}
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
+          onKeyDown={(e) => handleKeyDown(e)}
           placeholder="Enter your question"
         />
         <button
