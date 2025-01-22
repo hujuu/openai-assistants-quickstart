@@ -1,6 +1,15 @@
 import React from "react";
 import styles from "./weather-widget.module.css";
 
+type WeatherCondition = 'Cloudy' | 'Sunny' | 'Rainy' | 'Snowy' | 'Windy';
+
+interface WeatherWidgetProps {
+  location?: string;
+  temperature?: string | number;
+  conditions?: WeatherCondition;
+  isEmpty?: boolean;
+}
+
 const WeatherWidget = ({
   location = "---",
   temperature = "---",
