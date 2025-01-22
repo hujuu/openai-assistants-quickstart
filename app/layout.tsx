@@ -1,8 +1,13 @@
+import { ReactNode } from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Warnings from "./components/warnings";
 import { assistantId } from "./assistant-config";
 const inter = Inter({ subsets: ["latin"] });
+
+interface RootLayoutProps {
+    children: ReactNode;
+}
 
 export const metadata = {
   title: "Assistants API Quickstart",
@@ -12,12 +17,11 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <body className={inter.className}>
         {assistantId ? children : <Warnings />}
-        <img className="logo" src="/openai.svg" alt="OpenAI Logo" />
       </body>
     </html>
   );
