@@ -4,15 +4,18 @@ import { openai } from "@/app/openai";
 export const runtime = "nodejs";
 
 // Send a new message to a thread
-export async function POST(request, { params: { threadId } }) {
+export async function POST(
+    request: Request,
+    { params }: { params: Promise<{ threadId: string }> }
+) {
   const { content } = await request.json();
 
-  await openai.beta.threads.messages.create(threadId, {
+  await openai.beta.threads.messages.create((await params).threadId, {
     role: "user",
     content: content,
   });
 
-  const stream = openai.beta.threads.runs.stream(threadId, {
+  const stream = openai.beta.threads.runs.stream((await params).threadId, {
     assistant_id: assistantId,
   });
 
