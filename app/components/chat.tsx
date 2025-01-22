@@ -7,6 +7,7 @@ import Markdown from "react-markdown";
 // @ts-expect-error - no types for this yet
 import { AssistantStreamEvent } from "openai/resources/beta/assistants/assistants";
 import { RequiredActionFunctionToolCall } from "openai/resources/beta/threads/runs/runs";
+import AutoResizableTextarea from "@/app/components/AutoResizableTextarea";
 
 type MessageProps = {
   role: "user" | "assistant" | "code";
@@ -280,13 +281,10 @@ const Chat = ({
         onSubmit={handleSubmit}
         className={`${styles.inputForm} ${styles.clearfix}`}
       >
-        <input
-          type="text"
-          className={styles.input}
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          onKeyDown={(e) => handleKeyDown(e)}
-          placeholder="Enter your question"
+        <AutoResizableTextarea
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            placeholder="Enter your question"
         />
         <button
           type="submit"
