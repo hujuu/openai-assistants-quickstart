@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import styles from "./file-viewer.module.css";
 
+// ファイルの構造を定義
+interface File {
+  file_id: string;
+  filename: string;
+  status: string;
+}
+
 const TrashIcon = () => (
   <svg
     className={styles.fileDeleteIcon}
@@ -19,7 +26,7 @@ const TrashIcon = () => (
 );
 
 const FileViewer = () => {
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<File[]>([]); // 型指定
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -33,18 +40,18 @@ const FileViewer = () => {
     const resp = await fetch("/api/assistants/files", {
       method: "GET",
     });
-    const data = await resp.json();
+    const data: File[] = await resp.json(); // 型を合わせる
     setFiles(data);
   };
 
-  const handleFileDelete = async (fileId) => {
+  const handleFileDelete = async (fileId: string) => {
     await fetch("/api/assistants/files", {
       method: "DELETE",
       body: JSON.stringify({ fileId }),
     });
   };
 
-  const handleFileUpload = async (event) => {
+  const handleFileUpload = async (event: { target: { files: FileList } }) => {
     const data = new FormData();
     if (event.target.files.length < 0) return;
     data.append("file", event.target.files[0]);
