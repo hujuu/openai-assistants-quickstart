@@ -15,6 +15,10 @@ export async function POST(
     content: content,
   });
 
+  if (!assistantId) {
+    throw new Error("assistantId が未定義です。正しい設定を確認してください。");
+  }
+
   const stream = openai.beta.threads.runs.stream((await params).threadId, {
     assistant_id: assistantId,
   });
