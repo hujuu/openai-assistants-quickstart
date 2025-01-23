@@ -1,14 +1,6 @@
-import React from "react";
 import styles from "./weather-widget.module.css";
 
 type WeatherCondition = 'Cloudy' | 'Sunny' | 'Rainy' | 'Snowy' | 'Windy';
-
-interface WeatherWidgetProps {
-  location?: string;
-  temperature?: string | number;
-  conditions?: WeatherCondition;
-  isEmpty?: boolean;
-}
 
 const WeatherWidget = ({
   location = "---",
@@ -16,7 +8,7 @@ const WeatherWidget = ({
   conditions = "Sunny",
   isEmpty = false,
 }) => {
-  const conditionClassMap = {
+  const conditionClassMap: Record<WeatherCondition, string> = {
     Cloudy: styles.weatherBGCloudy,
     Sunny: styles.weatherBGSunny,
     Rainy: styles.weatherBGRainy,
@@ -36,7 +28,7 @@ const WeatherWidget = ({
   }
 
   const weatherClass = `${styles.weatherWidget} ${
-    conditionClassMap[conditions] || styles.weatherBGSunny
+    conditionClassMap[conditions as WeatherCondition] ?? styles.weatherBGSunny
   }`;
 
   return (
