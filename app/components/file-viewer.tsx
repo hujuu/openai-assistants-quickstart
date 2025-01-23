@@ -51,10 +51,15 @@ const FileViewer = () => {
     });
   };
 
-  const handleFileUpload = async (event: { target: { files: FileList } }) => {
+  const handleFileUpload = async (
+      event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
     const data = new FormData();
-    if (event.target.files.length < 0) return;
-    data.append("file", event.target.files[0]);
+    data.append("file", files[0]);
+
     await fetch("/api/assistants/files", {
       method: "POST",
       body: data,
