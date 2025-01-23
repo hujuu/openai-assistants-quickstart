@@ -1,22 +1,35 @@
-import { useQuery } from '@tanstack/react-query';
+"use client";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation'; // pathを/navigationに変更
 
-export const useAuthStatus = () => {
-    return useQuery({
-        queryKey: ['authStatus'],
-        queryFn: async () => {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/users/me`, {
-                credentials: 'include'
+export const useAuth = () => {
+    const router = useRouter();
+
+    async function checkAuth() {
+        try {
+            const response = await fetch('/api/auth/me', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
             });
 
             if (!response.ok) {
                 throw new Error('Not authenticated');
             }
 
-            return response.json();
-        },
-        // キャッシュの設定
-        staleTime: 5 * 60 * 1000,
-        gcTime: 6 * 60 * 1000,
-        retry: false,
-    });
+            return await response.json();
+
+        } catch (error) {
+            router.push('/login');
+            return null;
+        }
+    }
+
+    useEffect(() => {
+        checkAuth();
+    }, []);
+
+    return { checkAuth };
 };
