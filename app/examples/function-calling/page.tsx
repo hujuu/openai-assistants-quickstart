@@ -17,12 +17,21 @@ const FunctionCalling = () => {
   const [weatherData, setWeatherData] = useState<WeatherData>({});
   const isEmpty = Object.keys(weatherData).length === 0;
 
-  const functionCallHandler = async (call: RequiredActionFunctionToolCall) => {
-    if (call?.function?.name !== "get_weather") return;
-    const args = JSON.parse(call.function.arguments);
-    const data = getWeather(args.location);
-    setWeatherData(data);
-    return JSON.stringify(data);
+  const functionCallHandler = async (call: { function: { name: string; arguments: string; }; }) => {
+    if (call?.function?.name !== "get_weather") {
+      // undefined ではなく空文字列を返す
+      return "";
+    }
+    try {
+      const args = JSON.parse(call.function.arguments);
+      const data = await getWeather(args.location);
+      setWeatherData(data);
+      return JSON.stringify(data);
+    } catch (error) {
+      // エラー時にも空文字列を返す
+      console.error("Error in functionCallHandler:", error);
+      return "";
+    }
   };
 
   return (
