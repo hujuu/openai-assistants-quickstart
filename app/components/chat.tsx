@@ -120,9 +120,12 @@ const Chat = ({
         }),
       }
     );
-    // @ts-ignore
-    const stream = AssistantStream.fromReadableStream(response.body);
-    handleReadableStream(stream);
+    if (response.body) {
+      const stream = AssistantStream.fromReadableStream(response.body);
+      handleReadableStream(stream);
+    } else {
+      console.error("Response body is null");
+    }
   };
 
   const handleSubmit = (e: { preventDefault: () => void; }) => {
