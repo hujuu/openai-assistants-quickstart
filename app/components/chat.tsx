@@ -275,7 +275,6 @@ const Chat = ({
     
   }
 
-  // @ts-ignore
   return (
     <div className={styles.chatContainer}>
       <div className={styles.messages}>
