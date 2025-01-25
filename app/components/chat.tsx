@@ -69,7 +69,6 @@ const Chat = ({
   const [messages, setMessages] = useState<Array<MessageProps>>([]);
   const [inputDisabled, setInputDisabled] = useState(false);
   const [threadId, setThreadId] = useState("");
-  const [isMessageSaved, setIsMessageSaved] = useState(false);
 
   // automatically scroll to bottom of chat
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -218,27 +217,20 @@ const Chat = ({
   // handleRunCompleted - re-enable the input form
   const handleRunCompleted = () => {
     setInputDisabled(false);
-    setIsMessageSaved(false);
 
-    // POSTリクエストが二重に呼ばれないようフラグを導入
-    if (!isMessageSaved) {
-      setMessages((prevMessages) => {
-        if (prevMessages.length > 0) {
-          const lastMessage = prevMessages[prevMessages.length - 1];
-
-          saveMessageToServer({
-            chat_id: chatId,
-            content: lastMessage.text || "", // 最終的なメッセージ内容（undefined対策に空文字を追加）
-            role: lastMessage.role || "assistant", // roleが未定義の場合のデフォルト値
-          });
-        } else {
-          console.warn("No messages to save.");
-        }
-        return prevMessages; // 元のステートをそのまま返す
-      });
-      setIsMessageSaved(true); // フラグを立てる
-    }
-
+    setMessages((prevMessages) => {
+      if (prevMessages.length > 0) {
+        const lastMessage = prevMessages[prevMessages.length - 1];
+        saveMessageToServer({
+          chat_id: chatId,
+          content: lastMessage.text || "",
+          role: lastMessage.role || "assistant",
+        });
+      } else {
+        console.warn("No messages to save.");
+      }
+      return prevMessages;
+    });
   };
 
   const saveMessageToServer = async (message: { chat_id: string; content: string; role: string }) => {
