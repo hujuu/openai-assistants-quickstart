@@ -12,7 +12,7 @@ export const metadata = {
     icon: "/openai.svg",
   },
 };
-export async function getEvents() {
+async function getEvents() {
   try {
     const response = await fetch('http://localhost:8000/chat');
     if (!response.ok) {
