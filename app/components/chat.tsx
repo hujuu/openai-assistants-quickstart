@@ -8,6 +8,7 @@ import Markdown from "react-markdown";
 import { AssistantStreamEvent } from "openai/resources/beta/assistants/assistants";
 import { RequiredActionFunctionToolCall } from "openai/resources/beta/threads/runs/runs";
 import AutoResizableTextarea from "@/app/components/AutoResizableTextarea";
+import { TextDelta } from "openai/resources/beta/threads/messages";
 
 type MessageProps = {
   role: "user" | "assistant" | "code";
@@ -160,7 +161,7 @@ const Chat = ({
   };
 
   // textDelta - append text to last assistant message
-  const handleTextDelta = (delta: { value: null; annotations: null; }) => {
+  const handleTextDelta = (delta: TextDelta) => {
     if (delta.value != null) {
       appendToLastMessage(delta.value);
     }
