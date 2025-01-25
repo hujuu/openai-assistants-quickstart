@@ -24,7 +24,7 @@ async function getEvents() {
       name: event.name,
       thread_id: event.thread_id,
       user_id: event.user_id,
-      url: `/events/${event.thread_id}`, // リンク用に追加
+      url: `/chat/${event.thread_id}`, // リンク用に追加
     }));
   } catch (error) {
     console.error(error);
