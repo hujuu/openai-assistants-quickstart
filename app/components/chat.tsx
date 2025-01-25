@@ -90,6 +90,13 @@ const Chat = ({
   }, []);
 
   const sendMessage = async (text: string) => {
+    // ユーザーのメッセージを保存
+    saveMessageToServer({
+      chat_id: "1", // 固定値
+      content: text, // ユーザーメッセージのテキスト
+      role: "user", // ロールを "user" に設定
+    });
+
     const response = await fetch(
       `/api/assistants/threads/${threadId}/messages`,
       {
