@@ -66,6 +66,7 @@ const Chat = ({
   const [messages, setMessages] = useState<Array<MessageProps>>([]);
   const [inputDisabled, setInputDisabled] = useState(false);
   const [threadId, setThreadId] = useState("");
+  const [isMessageSaved, setIsMessageSaved] = useState(false);
 
   // automatically scroll to bottom of chat
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -133,7 +134,6 @@ const Chat = ({
     e.preventDefault();
     if (!userInput.trim()) return;
     sendMessage(userInput);
-    // @ts-ignore
     setMessages((prevMessages) => [
       ...prevMessages,
       { role: "user", text: userInput },
@@ -208,12 +208,56 @@ const Chat = ({
   // handleRunCompleted - re-enable the input form
   const handleRunCompleted = () => {
     setInputDisabled(false);
+    setIsMessageSaved(false);
+
+    // POSTリクエストが二重に呼ばれないようフラグを導入
+    if (!isMessageSaved) {
+      setMessages((prevMessages) => {
+        if (prevMessages.length > 0) {
+          const lastMessage = prevMessages[prevMessages.length - 1];
+
+          saveMessageToServer({
+            chat_id: "1", // 固定値
+            content: lastMessage.text || "", // 最終的なメッセージ内容（undefined対策に空文字を追加）
+            role: lastMessage.role || "assistant", // roleが未定義の場合のデフォルト値
+          });
+        } else {
+          console.warn("No messages to save.");
+        }
+        return prevMessages; // 元のステートをそのまま返す
+      });
+      setIsMessageSaved(true); // フラグを立てる
+    }
+
+  };
+
+  const saveMessageToServer = async (message: { chat_id: string; content: string; role: string }) => {
+    try {
+      const response = await fetch("http://localhost:8000/message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(message),
+      });
+
+      // すでに存在するメッセージは 409 で弾かれる場合
+      // 「重複は問題ない」と判断するなら 409 でもエラーにしない
+      if (!response.ok && response.status !== 409) {
+        console.error("Failed to save message:", await response.text());
+      } else if (response.status === 409) {
+        console.log("Message duplicated, but this is acceptable.");
+      } else {
+        console.log("Message saved successfully!");
+      }
+    } catch (error) {
+      console.error("Error while saving message:", error);
+    }
   };
 
   const handleReadableStream = (stream: AssistantStream) => {
     // messages
     stream.on("textCreated", handleTextCreated);
-    // @ts-ignore
     stream.on("textDelta", handleTextDelta);
 
     // image
@@ -239,10 +283,8 @@ const Chat = ({
   */
 
   const appendToLastMessage = (text: string) => {
-    // @ts-ignore
     setMessages((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
-      // @ts-ignore
       const updatedLastMessage = {
         ...lastMessage,
         text: lastMessage.text + text,
@@ -257,7 +299,6 @@ const Chat = ({
   };
 
   const annotateLastMessage = (annotations: any[]) => {
-    // @ts-ignore
     setMessages((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
       const updatedLastMessage = {
