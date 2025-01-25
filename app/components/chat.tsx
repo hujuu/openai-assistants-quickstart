@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useParams } from "next/navigation";
 import styles from "./chat.module.css";
 import { AssistantStream } from "openai/lib/AssistantStream";
 import Markdown from "react-markdown";
@@ -62,6 +63,8 @@ type ChatProps = {
 const Chat = ({
   functionCallHandler = () => Promise.resolve(""), // default to return empty string
 }: ChatProps) => {
+  const params = useParams();
+  const chatId = params.chatId as string;
   const [userInput, setUserInput] = useState("");
   const [messages, setMessages] = useState<Array<MessageProps>>([]);
   const [inputDisabled, setInputDisabled] = useState(false);
@@ -92,7 +95,7 @@ const Chat = ({
   const sendMessage = async (text: string) => {
     // ユーザーのメッセージを保存
     saveMessageToServer({
-      chat_id: "1", // 固定値
+      chat_id: chatId,
       content: text, // ユーザーメッセージのテキスト
       role: "user", // ロールを "user" に設定
     });
@@ -224,7 +227,7 @@ const Chat = ({
           const lastMessage = prevMessages[prevMessages.length - 1];
 
           saveMessageToServer({
-            chat_id: "1", // 固定値
+            chat_id: chatId,
             content: lastMessage.text || "", // 最終的なメッセージ内容（undefined対策に空文字を追加）
             role: lastMessage.role || "assistant", // roleが未定義の場合のデフォルト値
           });
@@ -300,8 +303,7 @@ const Chat = ({
     });
   };
 
-  const appendMessage = (role: string, text: string) => {
-    // @ts-ignore
+  const appendMessage = (role: "user" | "assistant" | "code", text: string) => {
     setMessages((prevMessages) => [...prevMessages, { role, text }]);
   };
 
