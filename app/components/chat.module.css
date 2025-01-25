@@ -9,7 +9,6 @@
   display: flex;
   width: 100%;
   padding: 10px;
-  padding-bottom: 40px;
   order: 1;
 }
 
@@ -19,8 +18,11 @@
   margin-right: 10px;
   border-radius: 60px;
   border: 2px solid transparent;
+  box-sizing: border-box; /* パディングを含めた幅管理 */
   font-size: 1em;
   background-color: #efefef;
+  line-height: 1.4; /* 行間を調整 */
+  outline: none; /* フォーカス時にデフォルト枠線を非表示 */
 }
 
 .input:focus {
