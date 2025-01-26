@@ -215,9 +215,10 @@ const Chat = ({
       annotateLastMessage(delta.annotations);
     }
   };
-
-  // imageFileDone - show image in chat
-  const handleImageFileDone = (image: { file_id: any; }) => {
+  
+  // imageFileDone - handling only when image exists
+  const handleImageFileDone = (image: { file_id: any } | null) => {
+    if (!image || !image.file_id) return; // 画像がない場合は何もしない
     appendToLastMessage(`\n![${image.file_id}](/api/files/${image.file_id})\n`);
   }
 
@@ -336,7 +337,8 @@ const Chat = ({
     setMessages((prevMessages) => [...prevMessages, { role, text }]);
   };
 
-  const annotateLastMessage = (annotations: any[]) => {
+  const annotateLastMessage = (annotations: any[] | null) => {
+    if (!annotations || annotations.length === 0) return; // 注釈がない場合は処理をスキップ
     setMessages((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
       const updatedLastMessage = {
