@@ -134,10 +134,6 @@ export function ApplicationLayout({
                 <Square2StackIcon className="w-6" />
                 <SidebarLabel>Events</SidebarLabel>
               </SidebarItem>
-              <SidebarItem href="/orders" current={pathname.startsWith('/orders')}>
-                <TicketIcon className="w-6" />
-                <SidebarLabel>Orders</SidebarLabel>
-              </SidebarItem>
               <SidebarItem href="/settings" current={pathname.startsWith('/settings')}>
                 <Cog6ToothIcon className="w-6" />
                 <SidebarLabel>Settings</SidebarLabel>
