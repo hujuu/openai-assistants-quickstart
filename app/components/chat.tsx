@@ -81,9 +81,8 @@ const Chat = ({
 
   // create a new threadID when chat component created
   useEffect(() => {
-    if (chatId) {
-      // chatIdがある場合のみ履歴を取得
-      const fetchChatHistory = async () => {
+    const fetchChatHistoryAndThread = async () => {
+      if (chatId) {
         try {
           const response = await fetch(`http://localhost:8000/message/${chatId}`);
           if (!response.ok) throw new Error("Failed to fetch chat history");
@@ -94,15 +93,31 @@ const Chat = ({
             text: msg.content,
           }));
           setMessages(formattedMessages);
+
+          // 2. chatIdからスレッドIDを取得
+          console.log(`Fetching thread for chatId: ${chatId}`);
+          const threadResponse = await fetch(`http://localhost:8000/chat/${chatId}`);
+          if (threadResponse.ok) {
+            const threadData = await threadResponse.json();
+            if (threadData.thread_id) { // 修正ポイント: thread_id を参照
+              // 既存のスレッドIDをセット
+              console.log(`Fetched existing thread_id: ${threadData.thread_id}`);
+              setThreadId(threadData.thread_id); // 修正ポイント: thread_id を利用
+              setInputDisabled(false); // スレッドIDが確定したので送信を有効化
+              return; // 既存スレッド取得成功 → 処理終了
+            }
+          }
+
+          console.warn("No thread_id found for the provided chatId.");
         } catch (error) {
           console.error("Error fetching chat history:", error);
         }
-      };
-
-      fetchChatHistory();
-    } else {
-      console.warn("chatId is missing. Skipping fetchChatHistory.");
-    }
+      } else {
+        console.warn("chatId is missing. Skipping fetchChatHistoryAndThread.");
+      }
+      // ここに到達する場合はスレッドIDを取得できなかった時のみ
+      await createThread();
+    };
 
     const createThread = async () => {
       const res = await fetch(`/api/assistants/threads`, {
@@ -111,10 +126,17 @@ const Chat = ({
       const data = await res.json();
       setThreadId(data.threadId);
     };
-    createThread();
-  }, []);
+    
+    fetchChatHistoryAndThread();
+  }, [chatId]);
 
   const sendMessage = async (text: string) => {
+    // threadIdが未設定の場合はエラーログ、または送信をブロック
+    if (!threadId) {
+      console.error("Cannot send message: threadId is undefined.");
+      return;
+    }
+
     // ユーザーのメッセージを保存
     saveMessageToServer({
       chat_id: chatId || "1",
