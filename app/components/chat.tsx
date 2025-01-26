@@ -64,7 +64,7 @@ const Chat = ({
   functionCallHandler = () => Promise.resolve(""), // default to return empty string
 }: ChatProps) => {
   const params = useParams();
-  const chatId = params.chatId as string;
+  const chatId = params?.chatId as string | undefined;
   const [userInput, setUserInput] = useState("");
   const [messages, setMessages] = useState<Array<MessageProps>>([]);
   const [inputDisabled, setInputDisabled] = useState(false);
@@ -81,6 +81,29 @@ const Chat = ({
 
   // create a new threadID when chat component created
   useEffect(() => {
+    if (chatId) {
+      // chatIdがある場合のみ履歴を取得
+      const fetchChatHistory = async () => {
+        try {
+          const response = await fetch(`http://localhost:8000/message/${chatId}`);
+          if (!response.ok) throw new Error("Failed to fetch chat history");
+
+          const history = await response.json();
+          const formattedMessages = history.map((msg: { role: string; content: string }) => ({
+            role: msg.role,
+            text: msg.content,
+          }));
+          setMessages(formattedMessages);
+        } catch (error) {
+          console.error("Error fetching chat history:", error);
+        }
+      };
+
+      fetchChatHistory();
+    } else {
+      console.warn("chatId is missing. Skipping fetchChatHistory.");
+    }
+
     const createThread = async () => {
       const res = await fetch(`/api/assistants/threads`, {
         method: "POST",
@@ -94,7 +117,7 @@ const Chat = ({
   const sendMessage = async (text: string) => {
     // ユーザーのメッセージを保存
     saveMessageToServer({
-      chat_id: chatId,
+      chat_id: chatId || "1",
       content: text, // ユーザーメッセージのテキスト
       role: "user", // ロールを "user" に設定
     });
@@ -222,7 +245,7 @@ const Chat = ({
       if (prevMessages.length > 0) {
         const lastMessage = prevMessages[prevMessages.length - 1];
         saveMessageToServer({
-          chat_id: chatId,
+          chat_id: chatId || "1",
           content: lastMessage.text || "",
           role: lastMessage.role || "assistant",
         });
@@ -315,7 +338,6 @@ const Chat = ({
       })
       return [...prevMessages.slice(0, -1), updatedLastMessage];
     });
-    
   }
 
   return (
