@@ -64,7 +64,7 @@ const Chat = ({
   functionCallHandler = () => Promise.resolve(""), // default to return empty string
 }: ChatProps) => {
   const params = useParams();
-  const chatId = params?.chatId as string | undefined;
+  const [chatId, setChatId] = useState<string | undefined>(params?.chatId as string | undefined);
   const [userInput, setUserInput] = useState("");
   const [messages, setMessages] = useState<Array<MessageProps>>([]);
   const [inputDisabled, setInputDisabled] = useState(false);
@@ -84,16 +84,6 @@ const Chat = ({
     const fetchChatHistoryAndThread = async () => {
       if (chatId) {
         try {
-          const response = await fetch(`http://localhost:8000/message/${chatId}`);
-          if (!response.ok) throw new Error("Failed to fetch chat history");
-
-          const history = await response.json();
-          const formattedMessages = history.map((msg: { role: string; content: string }) => ({
-            role: msg.role,
-            text: msg.content,
-          }));
-          setMessages(formattedMessages);
-
           // 2. chatIdからスレッドIDを取得
           console.log(`Fetching thread for chatId: ${chatId}`);
           const threadResponse = await fetch(`http://localhost:8000/chat/${chatId}`);
@@ -104,11 +94,22 @@ const Chat = ({
               console.log(`Fetched existing thread_id: ${threadData.thread_id}`);
               setThreadId(threadData.thread_id); // 修正ポイント: thread_id を利用
               setInputDisabled(false); // スレッドIDが確定したので送信を有効化
-              return; // 既存スレッド取得成功 → 処理終了
             }
           }
 
-          console.warn("No thread_id found for the provided chatId.");
+          const response = await fetch(`http://localhost:8000/message/${chatId}`);
+          if (!response.ok) {
+            console.warn("Failed to fetch chat history. Skipping...");
+            return;
+          }
+
+          const history = await response.json();
+          const formattedMessages = history.map((msg: { role: string; content: string }) => ({
+            role: msg.role,
+            text: msg.content,
+          }));
+          setMessages(formattedMessages);
+          return; // 既存スレッド取得成功 → 処理終了
         } catch (error) {
           console.error("Error fetching chat history:", error);
         }
@@ -125,6 +126,7 @@ const Chat = ({
       });
       const data = await res.json();
       setThreadId(data.threadId);
+      setChatId(data.result.chat.id);
     };
     
     fetchChatHistoryAndThread();
