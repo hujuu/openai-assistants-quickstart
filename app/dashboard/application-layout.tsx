@@ -22,7 +22,6 @@ import {
   SidebarSpacer,
 } from '@/app/components/sidebar'
 import { SidebarLayout } from '@/app/components/sidebar-layout'
-import { getEvents } from '@/app/data'
 import {
   ArrowRightStartOnRectangleIcon,
   ChevronDownIcon,
@@ -66,6 +65,26 @@ function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' })
       </DropdownItem>
     </DropdownMenu>
   )
+}
+
+async function getEvents() {
+  try {
+    const response = await fetch('http://localhost:8000/chat');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch events: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.map((event: any) => ({
+      id: event.id,
+      name: event.name,
+      thread_id: event.thread_id,
+      user_id: event.user_id,
+      url: `/chat/${event.id}`,
+    }));
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
 }
 
 export function ApplicationLayout({
@@ -142,7 +161,9 @@ export function ApplicationLayout({
 
             <SidebarSection className="max-lg:hidden">
               <SidebarHeading>Upcoming Events</SidebarHeading>
-              {events.map((event) => (
+              {events.map((
+                  event: { id: string; name: string; thread_id: string; user_id: string; url: string }
+              ) => (
                 <SidebarItem key={event.id} href={event.url}>
                   {event.name}
                 </SidebarItem>
