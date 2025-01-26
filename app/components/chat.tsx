@@ -175,16 +175,6 @@ const Chat = ({
     scrollToBottom();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      // Shiftキーを押していない場合は送信を防ぐ
-      e.preventDefault();
-    } else if (e.key === "Enter" && e.shiftKey) {
-      // Shift + Enter の場合は改行を追加する（必要に応じて）
-      setUserInput((prevInput) => prevInput + "\n");
-    }
-  };
-
   /* Stream Event Handlers */
 
   // textCreated - create new assistant message
