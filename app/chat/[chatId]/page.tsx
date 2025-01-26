@@ -2,13 +2,13 @@
 
 import React from "react";
 import styles from "./page.module.css";
-import ChatStream from "@/app/components/chat-stream";
+import Chat from "@/app/components/chat";
 
 const Home = () => {
   return (
     <main className={styles.main}>
       <div className={styles.container}>
-        <ChatStream />
+        <Chat />
       </div>
     </main>
   );
