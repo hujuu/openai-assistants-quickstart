@@ -41,6 +41,7 @@ import {
   TicketIcon,
 } from '@heroicons/react/20/solid'
 import { usePathname } from 'next/navigation'
+import {useEffect, useState} from "react";
 
 function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' }) {
   return (
@@ -67,34 +68,45 @@ function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' })
   )
 }
 
-async function getEvents() {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch events: ${response.statusText}`);
-    }
-    const data = await response.json();
-    return data.map((event: any) => ({
-      id: event.id,
-      name: event.name,
-      thread_id: event.thread_id,
-      user_id: event.user_id,
-      url: `/chat/${event.id}`,
-    }));
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-}
-
-export function ApplicationLayout({
-  events,
+export default function ApplicationLayout({
   children,
 }: {
-  events: Awaited<ReturnType<typeof getEvents>>
   children: React.ReactNode
 }) {
-  let pathname = usePathname()
+  const [events, setEvents] = useState<
+      { id: string; name: string; thread_id: string; user_id: string; url: string }[]
+  >([]);
+  const [loading, setLoading] = useState(true); // ロード中の状態管理
+
+  const pathname = usePathname();
+
+  // クライアントサイドでイベントデータを取得
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+          credentials: 'include',
+        });
+        const data = await response.json();
+
+        // データをマッピングして state にセット
+        const mappedEvents = data.map((event: any) => ({
+          id: event.id,
+          name: event.name,
+          thread_id: event.thread_id,
+          user_id: event.user_id,
+          url: `/chat/${event.id}`,
+        }));
+        setEvents(mappedEvents);
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+      } finally {
+        setLoading(false); // ローディング完了
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   return (
     <SidebarLayout
