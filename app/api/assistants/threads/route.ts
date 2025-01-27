@@ -13,28 +13,33 @@ function getCurrentTimestamp(): string {
   return `${year}${month}${day}${hours}${minutes}${seconds}`;
 }
 
-async function postThreadData(threadId: string) {
+async function postThreadData(threadId: string, userId: string) {
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      "user_id": "1",
-      "name": getCurrentTimestamp(),
-      "thread_id": threadId,
+      user_id: userId,
+      name: getCurrentTimestamp(),
+      thread_id: threadId,
     }),
   });
   return response.json();
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    const body = await request.json();
+    // userIdの取り出し（デフォルト値を設定可能）
+    const userId = body.userId;
     const thread = await openai.beta.threads.create();
     const threadId = thread.id;
 
-    const result = await postThreadData(threadId);
-    return Response.json({ threadId: threadId, result: result });
+    const result = await postThreadData(threadId, userId);
+    return new Response(JSON.stringify({ threadId: threadId, result: result }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     return new Response('Error creating or posting thread', { status: 500 });
   }
