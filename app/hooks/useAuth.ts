@@ -7,7 +7,7 @@ export const useAuth = () => {
 
     async function checkAuth() {
         try {
-            const response = await fetch('/api/auth/me', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/users/me`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
