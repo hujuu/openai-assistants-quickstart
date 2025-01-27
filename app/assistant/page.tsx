@@ -2,13 +2,15 @@
 
 import React from "react";
 import styles from "./page.module.css";
-import Chat from "../components/chat";
+import {useAuth} from "@/app/hooks/useAuth";
+import ChatStream from "@/app/components/chat-stream";
 
 const Home = () => {
+  useAuth();
   return (
     <main className={styles.main}>
       <div className={styles.container}>
-        <Chat />
+        <ChatStream />
       </div>
     </main>
   );
