@@ -87,7 +87,7 @@ const Chat = ({
         try {
           console.log(`Fetching thread for chatId: ${chatId}`);
 
-          const threadResponse = await fetch(`http://localhost:8000/chat/${chatId}`);
+          const threadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/${chatId}`);
           if (threadResponse.ok) {
             const threadData = await threadResponse.json();
             if (threadData?.thread_id) { // thread_id が存在する場合のみ処理を続行
@@ -102,7 +102,7 @@ const Chat = ({
               );
               if (messagesResponse.ok) {
                 const history = await messagesResponse.json();
-                
+
                 const formattedMessages = history
                     .map((msg: any) => {
                       const content = msg.content
