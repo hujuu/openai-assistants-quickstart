@@ -278,7 +278,7 @@ const Chat = ({
         });
     };
 
-    const saveMessageToServer = async (message: { chat_id: string; content: string; role: string }) => {
+    const saveMessageToServer = async (message: { chat_id: string; content: string; role: string; message_id: string }) => {
         try {
             const response = await fetch("http://localhost:8000/message", {
                 method: "POST",
