@@ -10,10 +10,12 @@ export async function POST(
 ) {
   const { content } = await request.json();
 
-  await openai.beta.threads.messages.create((await params).threadId, {
+  const messageResponse = await openai.beta.threads.messages.create((await params).threadId, {
     role: "user",
     content: content,
   });
+
+  const messageId = messageResponse?.id; // メッセージIDを取得
 
   if (!assistantId) {
     throw new Error("assistantId が未定義です。正しい設定を確認してください。");
@@ -23,5 +25,10 @@ export async function POST(
     assistant_id: assistantId,
   });
 
-  return new Response(stream.toReadableStream());
+  const headers = new Headers({
+    "Content-Type": "application/octet-stream",
+  });
+  if (messageId) headers.set("X-Message-Id", messageId);
+
+  return new Response(stream.toReadableStream(), { headers });
 }

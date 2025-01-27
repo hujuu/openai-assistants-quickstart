@@ -90,7 +90,7 @@ const Chat = ({
           const threadResponse = await fetch(`http://localhost:8000/chat/${chatId}`);
           if (threadResponse.ok) {
             const threadData = await threadResponse.json();
-            if (threadData.thread_id) { // 修正ポイント: thread_id を参照
+            if (threadData.thread_id) {
               // 既存のスレッドIDをセット
               console.log(`Fetched existing thread_id: ${threadData.thread_id}`);
               setThreadId(threadData.thread_id); // 修正ポイント: thread_id を利用
@@ -161,9 +161,16 @@ const Chat = ({
         }
     );
 
+    // ヘッダーからmessageIdを取得
+    const messageId = response.headers.get("X-Message-Id");
+    console.log("Message ID: ", messageId);
+
+    // ストリーム処理
     if (response.body) {
       const stream = AssistantStream.fromReadableStream(response.body);
       handleReadableStream(stream);
+    } else {
+      console.error("Response body is null");
     }
   };
 
