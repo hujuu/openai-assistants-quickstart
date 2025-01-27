@@ -9,14 +9,11 @@ import { AssistantStreamEvent } from "openai/resources/beta/assistants/assistant
 import { RequiredActionFunctionToolCall } from "openai/resources/beta/threads/runs/runs";
 import AutoResizableTextarea from "@/app/components/AutoResizableTextarea";
 import { TextDelta } from "openai/resources/beta/threads/messages";
+import UserMessage from "@/app/components/UserMessage";
 
 type MessageProps = {
     role: "user" | "assistant" | "code";
     text: string;
-};
-
-const UserMessage = ({ text }: { text: string }) => {
-    return <div className={styles.userMessage}>{text}</div>;
 };
 
 const AssistantMessage = ({ text }: { text: string }) => {
@@ -91,7 +88,7 @@ const Chat = ({
                         if (threadData.thread_id) {
                             // 既存のスレッドIDをセット
                             console.log(`Fetched existing thread_id: ${threadData.thread_id}`);
-                            setThreadId(threadData.thread_id); // 修正ポイント: thread_id を利用
+                            setThreadId(threadData.thread_id);
                             setInputDisabled(false); // スレッドIDが確定したので送信を有効化
                         }
                     }
@@ -125,8 +122,15 @@ const Chat = ({
         let currentChatId = chatId;
         if (!currentThreadId) {
             try {
+                const user = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/users/me`, {
+                    credentials: 'include',
+                })
+                const userData = await user.json();
                 const threadResponse = await fetch(`/api/assistants/threads`, {
                     method: "POST",
+                    body: JSON.stringify({
+                        userId: userData.id,
+                    }),
                 });
                 if (threadResponse.ok) {
                     const threadData = await threadResponse.json();
