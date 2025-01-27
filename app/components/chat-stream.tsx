@@ -311,7 +311,6 @@ const Chat = ({
         stream.on("toolCallCreated", toolCallCreated);
         // @ts-ignore
         stream.on("toolCallDelta", toolCallDelta);
-
         // events without helpers yet (e.g. requires_action and run.done)
         stream.on("event", (event) => {
             if (event.event === "thread.run.requires_action")
