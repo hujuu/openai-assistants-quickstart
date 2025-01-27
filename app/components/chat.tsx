@@ -85,40 +85,55 @@ const Chat = ({
     const fetchChatHistoryAndThread = async () => {
       if (chatId) {
         try {
-          // 2. chatIdからスレッドIDを取得
           console.log(`Fetching thread for chatId: ${chatId}`);
+          // threadID を取得
           const threadResponse = await fetch(`http://localhost:8000/chat/${chatId}`);
           if (threadResponse.ok) {
             const threadData = await threadResponse.json();
-            if (threadData.thread_id) {
-              // 既存のスレッドIDをセット
+            if (threadData?.thread_id) { // thread_id が存在する場合のみ処理を続行
               console.log(`Fetched existing thread_id: ${threadData.thread_id}`);
-              setThreadId(threadData.thread_id); // 修正ポイント: thread_id を利用
-              setInputDisabled(false); // スレッドIDが確定したので送信を有効化
+              setThreadId(threadData.thread_id); // threadId をセット
+              setInputDisabled(false);
+
+              // メッセージ履歴をフェッチ
+              console.log(`Fetching messages for threadId: ${threadData.thread_id}`);
+              const messagesResponse = await fetch(
+                  `/api/assistants/threads/${threadData.thread_id}/messages`
+              );
+              if (messagesResponse.ok) {
+                const history = await messagesResponse.json();
+
+                // メッセージを整形
+                const formattedMessages = history.map((msg: any) => {
+                  const content = msg.content
+                      .filter((item: any) => item.type === "text") // テキストのみ抽出
+                      .map((item: any) => item.text.value) // テキストの中身を取得
+                      .join("\n"); // 必要に応じて連結
+
+                  return {
+                    role: msg.role, // メッセージの役割
+                    text: content, // メッセージ本文
+                  };
+                });
+
+                setMessages(formattedMessages); // メッセージを更新
+              } else {
+                console.warn("Failed to fetch messages. Skipping...");
+              }
+            } else {
+              console.error("threadData does not contain a valid thread_id.");
             }
+          } else {
+            console.warn("Failed to fetch threadId. Skipping...");
           }
-
-          const response = await fetch(`http://localhost:8000/message/${chatId}`);
-          if (!response.ok) {
-            console.warn("Failed to fetch chat history. Skipping...");
-            return;
-          }
-
-          const history = await response.json();
-          const formattedMessages = history.map((msg: { role: string; content: string }) => ({
-            role: msg.role,
-            text: msg.content,
-          }));
-          setMessages(formattedMessages);
-          return; // 既存スレッド取得成功 → 処理終了
         } catch (error) {
-          console.error("Error fetching chat history:", error);
+          console.error("Error fetching chat history and thread:", error);
         }
       } else {
         console.warn("chatId is missing. Skipping fetchChatHistoryAndThread.");
       }
     };
-    
+
     fetchChatHistoryAndThread();
   }, [chatId]);
 
@@ -146,12 +161,6 @@ const Chat = ({
         return;
       }
     }
-
-    saveMessageToServer({
-      chat_id: currentChatId || "1",
-      content: text,
-      role: "user",
-    });
 
     const response = await fetch(
         `/api/assistants/threads/${currentThreadId}/messages`,
@@ -265,41 +274,6 @@ const Chat = ({
   // handleRunCompleted - re-enable the input form
   const handleRunCompleted = () => {
     setInputDisabled(false);
-    setMessages((prevMessages) => {
-      if (prevMessages.length > 0 && chatIdRef.current) {
-        const lastMessage = prevMessages[prevMessages.length - 1];
-        saveMessageToServer({
-          chat_id: chatIdRef.current,
-          content: lastMessage.text || "",
-          role: lastMessage.role || "assistant",
-        });
-      }
-      return prevMessages;
-    });
-  };
-
-  const saveMessageToServer = async (message: { chat_id: string; content: string; role: string }) => {
-    try {
-      const response = await fetch("http://localhost:8000/message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(message),
-      });
-
-      // すでに存在するメッセージは 409 で弾かれる場合
-      // 「重複は問題ない」と判断するなら 409 でもエラーにしない
-      if (!response.ok && response.status !== 409) {
-        console.error("Failed to save message:", await response.text());
-      } else if (response.status === 409) {
-        console.log("Message duplicated, but this is acceptable.");
-      } else {
-        console.log("Message saved successfully!");
-      }
-    } catch (error) {
-      console.error("Error while saving message:", error);
-    }
   };
 
   const handleReadableStream = (stream: AssistantStream) => {
