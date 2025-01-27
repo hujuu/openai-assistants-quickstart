@@ -14,7 +14,7 @@ export const metadata = {
 };
 async function getEvents() {
   try {
-    const response = await fetch('http://localhost:8000/chat');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`);
     if (!response.ok) {
       throw new Error(`Failed to fetch events: ${response.statusText}`);
     }
@@ -31,8 +31,8 @@ async function getEvents() {
     return [];
   }
 }
-// @ts-ignore
-export default async function RootLayout({ children }) {
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let events = await getEvents()
   return (
       <div>
