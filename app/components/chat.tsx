@@ -65,6 +65,7 @@ const Chat = ({
 }: ChatProps) => {
   const params = useParams();
   const [chatId, setChatId] = useState<string | undefined>(params?.chatId as string | undefined);
+  const chatIdRef = useRef<string | undefined>(params?.chatId as string | undefined);
   const [userInput, setUserInput] = useState("");
   const [messages, setMessages] = useState<Array<MessageProps>>([]);
   const [inputDisabled, setInputDisabled] = useState(false);
@@ -116,51 +117,53 @@ const Chat = ({
       } else {
         console.warn("chatId is missing. Skipping fetchChatHistoryAndThread.");
       }
-      // ここに到達する場合はスレッドIDを取得できなかった時のみ
-      await createThread();
-    };
-
-    const createThread = async () => {
-      const res = await fetch(`/api/assistants/threads`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      setThreadId(data.threadId);
-      setChatId(data.result.chat.id);
     };
     
     fetchChatHistoryAndThread();
   }, [chatId]);
 
   const sendMessage = async (text: string) => {
-    // threadIdが未設定の場合はエラーログ、または送信をブロック
-    if (!threadId) {
-      console.error("Cannot send message: threadId is undefined.");
-      return;
+    let currentThreadId = threadId;
+    let currentChatId = chatId;
+    if (!currentThreadId) {
+      try {
+        const threadResponse = await fetch(`/api/assistants/threads`, {
+          method: "POST",
+        });
+        if (threadResponse.ok) {
+          const threadData = await threadResponse.json();
+          currentThreadId = threadData.threadId;
+          currentChatId = threadData.result.chat.id;
+          chatIdRef.current = currentChatId;
+          setThreadId(currentThreadId);
+          setChatId(currentChatId);
+        } else {
+          console.error("Failed to create a new thread:", threadResponse.statusText);
+          return;
+        }
+      } catch (error) {
+        console.error("Error while creating the thread:", error);
+        return;
+      }
     }
 
-    // ユーザーのメッセージを保存
     saveMessageToServer({
-      chat_id: chatId || "1",
-      content: text, // ユーザーメッセージのテキスト
-      role: "user", // ロールを "user" に設定
+      chat_id: currentChatId || "1",
+      content: text,
+      role: "user",
     });
 
     const response = await fetch(
-      `/api/assistants/threads/${threadId}/messages`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          content: text,
-        }),
-      }
+        `/api/assistants/threads/${currentThreadId}/messages`,
+        {
+          method: "POST",
+          body: JSON.stringify({ content: text }),
+        }
     );
 
     if (response.body) {
       const stream = AssistantStream.fromReadableStream(response.body);
       handleReadableStream(stream);
-    } else {
-      console.error("Response body is null");
     }
   };
 
@@ -255,17 +258,14 @@ const Chat = ({
   // handleRunCompleted - re-enable the input form
   const handleRunCompleted = () => {
     setInputDisabled(false);
-
     setMessages((prevMessages) => {
-      if (prevMessages.length > 0) {
+      if (prevMessages.length > 0 && chatIdRef.current) {
         const lastMessage = prevMessages[prevMessages.length - 1];
         saveMessageToServer({
-          chat_id: chatId || "1",
+          chat_id: chatIdRef.current,
           content: lastMessage.text || "",
           role: lastMessage.role || "assistant",
         });
-      } else {
-        console.warn("No messages to save.");
       }
       return prevMessages;
     });
@@ -299,10 +299,8 @@ const Chat = ({
     // messages
     stream.on("textCreated", handleTextCreated);
     stream.on("textDelta", handleTextDelta);
-
     // image
     stream.on("imageFileDone", handleImageFileDone);
-
     // code interpreter
     stream.on("toolCallCreated", toolCallCreated);
     // @ts-ignore
