@@ -85,7 +85,7 @@ const Chat = ({
                 try {
                     // 2. chatIdからスレッドIDを取得
                     console.log(`Fetching thread for chatId: ${chatId}`);
-                    const threadResponse = await fetch(`http://localhost:8000/chat/${chatId}`);
+                    const threadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/${chatId}`);
                     if (threadResponse.ok) {
                         const threadData = await threadResponse.json();
                         if (threadData.thread_id) {
@@ -96,7 +96,7 @@ const Chat = ({
                         }
                     }
 
-                    const response = await fetch(`http://localhost:8000/message/${chatId}`);
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/message/${chatId}`);
                     if (!response.ok) {
                         console.warn("Failed to fetch chat history. Skipping...");
                         return;
@@ -279,7 +279,7 @@ const Chat = ({
 
     const saveMessageToServer = async (message: { chat_id: string; content: string; role: string; message_id: string }) => {
         try {
-            const response = await fetch("http://localhost:8000/message", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/message`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -301,7 +301,6 @@ const Chat = ({
     };
 
     const handleReadableStream = (stream: AssistantStream) => {
-        // messages
         stream.on("textCreated", handleTextCreated);
         stream.on("textDelta", handleTextDelta);
         // image
