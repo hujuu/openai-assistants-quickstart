@@ -3,6 +3,32 @@ import { openai } from "@/app/openai";
 
 export const runtime = "nodejs";
 
+export async function GET(
+    request: Request,
+    { params }: { params: Promise<{ threadId: string }> }
+) {
+  const { threadId } = await params;
+
+  try {
+    const threadMessages = await openai.beta.threads.messages.list(threadId);
+
+    const messages = threadMessages?.data;
+
+    return new Response(JSON.stringify(messages), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ error: "メッセージの取得に失敗しました。" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
+}
+
 // Send a new message to a thread
 export async function POST(
     request: Request,
