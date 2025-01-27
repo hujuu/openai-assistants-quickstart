@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import styles from "./chat.module.css";
@@ -70,6 +69,7 @@ const Chat = ({
     const [messages, setMessages] = useState<Array<MessageProps>>([]);
     const [inputDisabled, setInputDisabled] = useState(false);
     const [threadId, setThreadId] = useState("");
+    const currentMessageIdRef = useRef<string>("");
 
     // automatically scroll to bottom of chat
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -79,7 +79,6 @@ const Chat = ({
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
-
     // create a new threadID when chat component created
     useEffect(() => {
         const fetchChatHistoryAndThread = async () => {
@@ -151,6 +150,7 @@ const Chat = ({
             chat_id: currentChatId || "1",
             content: text,
             role: "user",
+            message_id: "",
         });
 
         const response = await fetch(
@@ -161,11 +161,12 @@ const Chat = ({
             }
         );
 
-        // ヘッダーからmessageIdを取得
         const messageId = response.headers.get("X-Message-Id");
         console.log("Message ID: ", messageId);
+        if (messageId) {
+            currentMessageIdRef.current = messageId;  // useRef を使用して更新
+        }
 
-        // ストリーム処理
         if (response.body) {
             const stream = AssistantStream.fromReadableStream(response.body);
             handleReadableStream(stream);
@@ -208,8 +209,6 @@ const Chat = ({
         setInputDisabled(true);
         scrollToBottom();
     };
-
-    /* Stream Event Handlers */
 
     // textCreated - create new assistant message
     const handleTextCreated = () => {
@@ -272,6 +271,7 @@ const Chat = ({
                     chat_id: chatIdRef.current,
                     content: lastMessage.text || "",
                     role: lastMessage.role || "assistant",
+                    message_id: currentMessageIdRef.current,
                 });
             }
             return prevMessages;
@@ -287,7 +287,6 @@ const Chat = ({
                 },
                 body: JSON.stringify(message),
             });
-
             // すでに存在するメッセージは 409 で弾かれる場合
             // 「重複は問題ない」と判断するなら 409 でもエラーにしない
             if (!response.ok && response.status !== 409) {
@@ -320,12 +319,6 @@ const Chat = ({
             if (event.event === "thread.run.completed") handleRunCompleted();
         });
     };
-
-    /*
-      =======================
-      === Utility Helpers ===
-      =======================
-    */
 
     const appendToLastMessage = (text: string) => {
         setMessages((prevMessages) => {
