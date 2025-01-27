@@ -69,7 +69,7 @@ function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' })
 
 async function getEvents() {
   try {
-    const response = await fetch('http://localhost:8000/chat');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`);
     if (!response.ok) {
       throw new Error(`Failed to fetch events: ${response.statusText}`);
     }
