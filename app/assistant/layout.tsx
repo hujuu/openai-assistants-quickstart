@@ -1,7 +1,7 @@
 import { Inter } from "next/font/google";
 import Warnings from "../components/warnings";
 import { assistantId } from "../assistant-config";
-import {ApplicationLayout} from "@/app/dashboard/application-layout";
+import { ApplicationLayout } from "@/app/dashboard/application-layout";
 import type React from "react";
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,7 +14,7 @@ export const metadata = {
 };
 async function getEvents() {
   try {
-    const response = await fetch('http://localhost:8000/chat');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`);
     if (!response.ok) {
       throw new Error(`Failed to fetch events: ${response.statusText}`);
     }
@@ -31,8 +31,12 @@ async function getEvents() {
     return [];
   }
 }
-// @ts-ignore
-export default async function RootLayout({ children }) {
+
+interface RootLayoutProps {
+  children: React.ReactNode;
+}
+
+export default async function RootLayout({ children }: RootLayoutProps) {
   let events = await getEvents()
   return (
       <div>
