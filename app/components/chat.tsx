@@ -86,7 +86,7 @@ const Chat = ({
       if (chatId) {
         try {
           console.log(`Fetching thread for chatId: ${chatId}`);
-          // threadID を取得
+
           const threadResponse = await fetch(`http://localhost:8000/chat/${chatId}`);
           if (threadResponse.ok) {
             const threadData = await threadResponse.json();
@@ -102,19 +102,20 @@ const Chat = ({
               );
               if (messagesResponse.ok) {
                 const history = await messagesResponse.json();
+                
+                const formattedMessages = history
+                    .map((msg: any) => {
+                      const content = msg.content
+                          .filter((item: any) => item.type === "text") // テキストのみ抽出
+                          .map((item: any) => item.text.value) // テキストの中身を取得
+                          .join("\n"); // 必要に応じて連結
 
-                // メッセージを整形
-                const formattedMessages = history.map((msg: any) => {
-                  const content = msg.content
-                      .filter((item: any) => item.type === "text") // テキストのみ抽出
-                      .map((item: any) => item.text.value) // テキストの中身を取得
-                      .join("\n"); // 必要に応じて連結
-
-                  return {
-                    role: msg.role, // メッセージの役割
-                    text: content, // メッセージ本文
-                  };
-                });
+                      return {
+                        role: msg.role, // メッセージの役割
+                        text: content, // メッセージ本文
+                      };
+                    })
+                    .reverse(); // 古いものから並べる
 
                 setMessages(formattedMessages); // メッセージを更新
               } else {
